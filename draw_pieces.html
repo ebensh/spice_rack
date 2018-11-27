@@ -1,0 +1,88 @@
+<html>
+<!--
+  All units are "thou" for thousandth of an inch.
+  height: 3 * 2 * sqrt(2) - sqrt(2) / 2
+  width: 5 * 2 * sqrt(2)
+  then *1000 for "thou"
+-->
+<head>
+</head>
+
+<body>
+<div id="three-inch"><span>3" Piece:</span></div>
+<div id="four-inch"><span>4" Piece:</span></div>
+<div id="seven-inch"><span>7" Piece:</span></div>
+<div id="eight-inch"><span>8" Piece:</span></div>
+<div id="eleven-inch"><span>11" Piece:</span></div>
+
+<script>
+  // https://codereview.stackexchange.com/questions/40145/making-lines-with-svg-and-javascript
+  SVG = {
+    createCanvas : function(width, height, containerId){
+      var container = document.getElementById(containerId);
+      var canvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      canvas.setAttribute('width', width);
+      canvas.setAttribute('height', height);
+      container.appendChild(canvas);    
+      return canvas;
+    },
+    createLine : function (x1, y1, x2, y2, color, w) {
+      var aLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      aLine.setAttribute('x1', x1);
+      aLine.setAttribute('y1', y1);
+      aLine.setAttribute('x2', x2);
+      aLine.setAttribute('y2', y2);
+      aLine.setAttribute('stroke', color);
+      aLine.setAttribute('stroke-width', w);
+      return aLine;
+    }
+  }
+
+  function pathPoints(width, height, gapDistance, gapWidth, curf) {
+    // Note: the top left is 0, 0. Start by drawing the frame,
+    // from BR to TR to TL to BL.
+    let points = [[width, height], [width, 0], [0, 0], [0, height]];
+
+    // Now create the gaps, every 2 inches.
+    for (let x = gapDistance; x < width; x += gapDistance) {
+      points.push([x - gapWidth / 2 + curf, height]);  // Bottom left of notch
+      points.push([x - gapWidth / 2 + curf, height / 2 + curf]);  // Top left of notch
+      points.push([x + gapWidth / 2 - curf, height / 2 + curf]);  // Top right of notch
+      points.push([x + gapWidth / 2 - curf, height]);  // Bottom right of notch
+    }
+    // At the end, connect the bottom right of the last gap
+    // with the bottom right of the piece.
+    points.push([width, height]);
+    return points;
+  }
+
+  function drawPointsAsPath(canvas, points) {
+    const color = '#888';
+    const strokeWidth = 1;
+    for (let i = 0; i < points.length - 1; ++i) {
+      let p1 = points[i];
+      let p2 = points[i+1];
+      console.log(p1, p2);
+      canvas.appendChild(SVG.createLine(p1[0], p1[1], p2[0], p2[1], color, strokeWidth));
+    }
+  }
+
+  function drawAll() {
+    const dpi = 100;
+    const curf = Math.floor(0.0175 * dpi);  // TODO: Get this from the shop.
+    const gapDistance = 2 * dpi;
+    const gapWidth = 1 / 8 * dpi;  // The thickness of the material (1/8")
+
+    let pieces = [['three-inch', 3], ['four-inch', 4], ['seven-inch', 7],
+                  ['eight-inch', 8], ['eleven-inch', 11]];
+
+    for (piece of pieces) {
+      let canvas = SVG.createCanvas(piece[1] * dpi, 4 * dpi, piece[0]);
+      let points = pathPoints(piece[1] * dpi, 4 * dpi, gapDistance, gapWidth, curf);
+      drawPointsAsPath(canvas, points);
+    }
+  }
+
+  drawAll();
+</script>
+</html>
